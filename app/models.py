@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text, func
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text, func, Float
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import JSONB
 from app.db import Base
 
 
@@ -27,14 +28,16 @@ class Experiment(Base):
 
 class Trace(Base):
     __tablename__ = "traces"
-
-    id = Column(Integer, primary_key=True, index=True)
-    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    id = Column(String(32), primary_key=True)  # the SDK makes this, it's a hex string
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
     experiment_id = Column(Integer, ForeignKey("experiments.id", ondelete="SET NULL"), nullable=True)
-    name = Column(String(255), nullable=False)
-    status = Column(String(50), nullable=False)
+    name = Column(String(300), nullable=False)
+    status = Column(String(16), nullable=False, default="ok")
+    input = Column(JSONB(none_as_null=True))
+    output = Column(JSONB(none_as_null=True))
     start_time = Column(DateTime(timezone=True), nullable=False)
-    end_time = Column(DateTime(timezone=True), nullable=True)
+    end_time = Column(DateTime(timezone=True))
+    duration_ms = Column(Float)
 
     project = relationship("Project", back_populates="traces")
     experiment = relationship("Experiment", back_populates="traces")
@@ -42,18 +45,22 @@ class Trace(Base):
 
 class Span(Base):
     __tablename__ = "spans"
-
-    id = Column(Integer, primary_key=True, index=True)
-    trace_id = Column(Integer, ForeignKey("traces.id",ondelete="CASCADE"),nullable=False)
-    parent_span_id = Column(Integer,ForeignKey("spans.id",ondelete="CASCADE"),nullable=False)
-    name = Column(String(255), nullable=False)
-    kind = Column(String(50), nullable=False)
-    status = Column(String(50), nullable=False)
-    input = Column(Text, nullable=True)
-    output = Column(Text, nullable=True)
+    # span ids are random 64-bit values, so scope them to their trace
+    trace_id = Column(String(32), ForeignKey("traces.id", ondelete="CASCADE"), primary_key=True)
+    id = Column(String(32), primary_key=True)
+    # deliberately NOT a foreign key: a child can arrive before its parent
+    parent_span_id = Column(String(32), nullable=True, index=True)
+    name = Column(String(300), nullable=False)
+    kind = Column(String(32), nullable=False, default="function")
+    status = Column(String(16), nullable=False, default="ok")
+    input = Column(JSONB(none_as_null=True))
+    output = Column(JSONB(none_as_null=True))
+    error_type = Column(String(200))
+    error_message = Column(Text)
+    error_stacktrace = Column(Text)
     start_time = Column(DateTime(timezone=True), nullable=False)
-    end_time = Column(DateTime(timezone=True), nullable=True)
+    end_time = Column(DateTime(timezone=True))
+    duration_ms = Column(Float)
+    attributes = Column(JSONB, default=dict)
 
-    trace = relationship("Trace",back_populates="spans", foreign_keys=[trace_id])
-    parent = relationship("Span", remote_side=[id], back_populates="children", foreign_keys=[parent_span_id])
-    children = relationship("Span", back_populates="parent", cascade="all, delete-orphan")
+    trace = relationship("Trace", back_populates="spans", foreign_keys=[trace_id])

@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.db import engine, Base, get_db
 from contextlib import asynccontextmanager
 from server.routers.projects import router as projects_router
+from server.routers import ingest
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -14,6 +15,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(projects_router)
+
+app.include_router(ingest.router)
 
 @app.get("/healthz")
 def health_check(db: Session = Depends(get_db)):

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import httpx
 
 
@@ -71,3 +73,6 @@ class AgentBench:
 
     def list_experiments(self, project_id: str) -> list[dict]:
         return self._request("GET", f"/v1/projects/{project_id}/experiments")
+    
+    def ingest(self, traces: list[dict]) -> dict:
+        return self._request("POST", "/v1/ingest", json={"traces": traces})

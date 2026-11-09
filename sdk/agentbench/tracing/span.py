@@ -104,3 +104,18 @@ def format_tree(spans: list[Span]) -> str:
 
 def print_tree(spans: list[Span]) -> None:
     print(format_tree(spans))
+
+def trace_payload(project_id: int, root: Span, spans: list[Span]) -> dict:
+    """One finished trace, in the shape POST /v1/ingest expects."""
+    return {
+        "id": root.trace_id,
+        "project_id": project_id,
+        "name": root.name,
+        "status": root.status,
+        "input": root.input,
+        "output": root.output,
+        "start_time": root.start_time.isoformat(),
+        "end_time": root.end_time.isoformat() if root.end_time else None,
+        "duration_ms": root.duration_ms,
+        "spans": [s.to_dict() for s in spans],
+    }

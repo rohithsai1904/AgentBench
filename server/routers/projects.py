@@ -2,12 +2,11 @@ from fastapi import APIRouter, Depends , HTTPException, status
 from typing import List, Optional
 from app.db import get_db
 from sqlalchemy.orm import Session
-from server import schemas as schemas
-from app import models as models
+from app import models,schemas
 
 router = APIRouter(prefix="/v1/projects", tags=["Projects"])
 
-@router.get("/", response_model=List[schemas.ProjectRead])
+@router.get("", response_model=List[schemas.ProjectRead])
 def get_projects(name: Optional[str] = None,skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     query = db.query(models.Project)
     if name:
@@ -15,7 +14,7 @@ def get_projects(name: Optional[str] = None,skip: int = 0, limit: int = 100, db:
     projects = query.offset(skip).limit(limit).all()
     return projects
 
-@router.get("{project_id}/experiments", response_model=List[schemas.ExperimentRead])
+@router.get("/{project_id}/experiments", response_model=List[schemas.ExperimentRead])
 def get_project_experiments(project_id: int, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     db_project = db.query(models.Project).filter(models.Project.id == project_id).first()
     if not db_project:
