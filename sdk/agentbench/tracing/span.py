@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-import json
 import secrets
 import time
 import traceback
+import dataclasses
+import math
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import date,datetime, timedelta, timezone
 from typing import Any, Optional
 
 
@@ -16,14 +17,74 @@ def new_trace_id() -> str:
 def new_span_id() -> str:
     return secrets.token_hex(8)  
 
+def _cut(text: str, limit: int) -> str:
+    if len(text) <= limit:
+        return text
+    return text[:limit] + f"...[+{len(text) - limit} chars]"
 
-def to_jsonable(value: Any) -> Any:
-    """Make any value JSON-safe. Unknown objects become their repr(); never raises."""
+def _safe_repr(value: Any, limit: int) -> str:
     try:
-        return json.loads(json.dumps(value, default=repr))
-    except Exception:
-        return repr(value)
+        return _cut(repr(value), limit)
+    except Exception:  # even repr() can fail on broken objects
+        return "<unserializable>"
 
+def _convert(v: Any, max_str: int, max_items: int, max_depth: int, depth: int) -> Any:
+    # 1. simple values pass through (strings are cut if too long)
+    if v is None or isinstance(v, (bool, int)):
+        return v
+    if isinstance(v, float):
+        return v if math.isfinite(v) else str(v)  # NaN / inf are not valid JSON
+    if isinstance(v, str):
+        return _cut(v, max_str)
+    if isinstance(v, (bytes, bytearray)):
+        return f"<{len(v)} bytes>"
+    if isinstance(v, (datetime, date)):
+        return v.isoformat()
+    
+    # 2. stop going deeper (protects against huge or self-referencing structures)
+    if depth >= max_depth:
+        return _safe_repr(v, max_str)
+
+    def rec(x: Any) -> Any:
+        return _convert(x, max_str, max_items, max_depth, depth + 1)
+
+    # 3. containers: convert each item, keep at most max_items
+    if isinstance(v, dict):
+        items = list(v.items())
+        out = {str(k): rec(val) for k, val in items[:max_items]}
+        if len(items) > max_items:
+            out["..."] = f"{len(items) - max_items} more keys"
+        return out
+    
+    if isinstance(v, (list, tuple, set, frozenset)):
+        seq = list(v)
+        out_list = [rec(x) for x in seq[:max_items]]
+        if len(seq) > max_items:
+            out_list.append(f"...{len(seq) - max_items} more items")
+        return out_list
+    
+    # 4. objects: pydantic models (OpenAI / Anthropic responses) and dataclasses
+    dump = getattr(v, "model_dump", None)
+    if callable(dump):
+        try:
+            return rec(dump())
+        except Exception:
+            pass
+        
+    if dataclasses.is_dataclass(v) and not isinstance(v, type):
+        return {f.name: rec(getattr(v, f.name, None)) for f in dataclasses.fields(v)}
+    # 5. anything else
+    return _safe_repr(v, max_str)
+
+
+def to_jsonable(
+    value: Any, *, max_str: int = 2000, max_items: int = 50, max_depth: int = 6
+) -> Any:
+    """Make any value JSON-safe and bounded in size. Never raises."""
+    try:
+        return _convert(value, max_str, max_items, max_depth, 0)
+    except Exception:
+        return _safe_repr(value, max_str)
 
 @dataclass
 class Span:

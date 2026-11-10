@@ -7,6 +7,7 @@ import logging
 import threading
 from typing import Any, Callable, Optional
 
+from ..llm_info import extract_usage
 from .span import Span, new_trace_id, to_jsonable
 
 log = logging.getLogger("agentbench")
@@ -101,7 +102,7 @@ def span(name: str, kind: str = "function") -> SpanScope:
     return SpanScope(name, kind)
 
 
-def observe(_fn: Optional[Callable] = None, *, name: Optional[str] = None, kind: str = "function"):
+def observe(_fn: Optional[Callable] = None, *, name: Optional[str] = None, kind: str = "function",_post=None):
     """Decorator for sync and async functions. Works as @observe and @observe(name=...)."""
 
     def decorator(fn: Callable) -> Callable:
@@ -115,7 +116,15 @@ def observe(_fn: Optional[Callable] = None, *, name: Optional[str] = None, kind:
             except TypeError:
                 data = {"args": args, "kwargs": kwargs}
             return to_jsonable(data)
-
+        
+        def record_output(s: Span, result: Any) -> None:
+            s.output = to_jsonable(result)
+            if _post is not None:
+                try:
+                    _post(s, result)
+                except Exception:  # telemetry must never break the call
+                    log.warning("agentbench: post-processing failed", exc_info=True)
+        
         if inspect.iscoroutinefunction(fn):
 
             @functools.wraps(fn)
@@ -123,7 +132,7 @@ def observe(_fn: Optional[Callable] = None, *, name: Optional[str] = None, kind:
                 with span(span_name, kind) as s:
                     s.input = capture_input(args, kwargs)
                     result = await fn(*args, **kwargs)
-                    s.output = to_jsonable(result)
+                    record_output(s,result)
                     return result
 
             return async_wrapper
@@ -133,7 +142,7 @@ def observe(_fn: Optional[Callable] = None, *, name: Optional[str] = None, kind:
             with span(span_name, kind) as s:
                 s.input = capture_input(args, kwargs)
                 result = fn(*args, **kwargs)
-                s.output = to_jsonable(result)
+                record_output(s,result)
                 return result
 
         return wrapper
@@ -153,8 +162,11 @@ def tool(_fn: Optional[Callable] = None, **kw: Any):
 
 def llm(_fn: Optional[Callable] = None, **kw: Any):
     kw.setdefault("kind", "llm")
+    kw.setdefault("_post", _record_llm_usage)
     return observe(_fn, **kw)
 
+def _record_llm_usage(span: Span, result: Any) -> None:
+    span.attributes.update(extract_usage(result))
 
 def wrap_context(fn: Callable) -> Callable:
     ctx = contextvars.copy_context()
