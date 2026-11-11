@@ -54,6 +54,16 @@ class TraceIn(BaseModel):
     duration_ms: Optional[float] = None
     spans: list[SpanIn] = Field(min_length=1)
 
+class TraceRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    project_id: int
+    experiment_id: Optional[int] = None
+    name: str
+    status: str
+    start_time: datetime
+    end_time: Optional[datetime] = None
+    duration_ms: Optional[float] = None
 
 class IngestRequest(BaseModel):
     traces: list[TraceIn] = Field(min_length=1)
