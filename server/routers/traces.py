@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app import models, schemas
+from app.build_tree import build_tree
 from app.db import get_db
 
 router = APIRouter(prefix="/v1/traces", tags=["Traces"])
@@ -24,9 +25,22 @@ def list_traces(
         query = query.filter(models.Trace.status == status_filter)
     return query.order_by(models.Trace.start_time.desc()).limit(limit).offset(offset).all()
 
-@router.get("/{trace_id}", response_model=schemas.TraceRead)
+@router.get("/{trace_id}", response_model=schemas.TraceDetail)
 def get_trace(trace_id: str, db: Session = Depends(get_db)):
     trace = db.get(models.Trace, trace_id)
     if trace is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Trace not found")
-    return trace
+    spans = [schemas.SpanRead.model_validate(s).model_dump() for s in trace.spans]
+    return schemas.TraceDetail(
+        id=trace.id,
+        project_id=trace.project_id,
+        experiment_id=trace.experiment_id,
+        name=trace.name,
+        status=trace.status,
+        start_time=trace.start_time,
+        end_time=trace.end_time,
+        duration_ms=trace.duration_ms,
+        input=trace.input,
+        output=trace.output,
+        tree=build_tree(spans),
+    )

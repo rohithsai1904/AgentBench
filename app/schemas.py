@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime
 from typing import Any, Optional
 
@@ -55,6 +57,7 @@ class TraceIn(BaseModel):
     spans: list[SpanIn] = Field(min_length=1)
 
 class TraceRead(BaseModel):
+    """Short row for GET /v1/traces (no spans)."""
     model_config = ConfigDict(from_attributes=True)
     id: str
     project_id: int
@@ -64,6 +67,36 @@ class TraceRead(BaseModel):
     start_time: datetime
     end_time: Optional[datetime] = None
     duration_ms: Optional[float] = None
+
+
+class SpanRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    parent_span_id: Optional[str] = None
+    name: str
+    kind: str
+    status: str
+    input: Any = None
+    output: Any = None
+    error_type: Optional[str] = None
+    error_message: Optional[str] = None
+    error_stacktrace: Optional[str] = None
+    start_time: datetime
+    end_time: Optional[datetime] = None
+    duration_ms: Optional[float] = None
+    attributes: dict[str, Any] = Field(default_factory=dict)
+
+
+class SpanNode(SpanRead):
+    orphaned: bool = False
+    children: list[SpanNode] = Field(default_factory=list)
+
+
+class TraceDetail(TraceRead):
+    """Single-trace payload: metadata plus a nested span tree."""
+    input: Any = None
+    output: Any = None
+    tree: list[SpanNode] = Field(default_factory=list)
 
 class IngestRequest(BaseModel):
     traces: list[TraceIn] = Field(min_length=1)

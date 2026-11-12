@@ -76,3 +76,14 @@ class AgentBench:
     
     def ingest(self, traces: list[dict]) -> dict:
         return self._request("POST", "/v1/ingest", json={"traces": traces})
+
+    def list_traces(self,project_id: int | None = None,status: str | None = None,limit: int = 100,offset: int = 0,) -> list[dict]:
+        params = {"limit": limit, "offset": offset}
+        if project_id is not None:
+            params["project_id"] = project_id
+        if status is not None:
+            params["status"] = status
+        return self._request("GET", "/v1/traces", params=params)
+
+    def get_trace(self, trace_id: str) -> dict:
+        return self._request("GET", f"/v1/traces/{trace_id}")

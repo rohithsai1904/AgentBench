@@ -1,4 +1,5 @@
 from .client import AgentBench, AgentBenchError
+from .viewer import format_trace, print_trace
 from .runtime import init
 from .tracing import (
     Span, SpanScope, clear, current_span, finished_spans, format_tree, llm, observe,
