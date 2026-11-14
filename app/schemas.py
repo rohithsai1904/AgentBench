@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 class ProjectCreate(BaseModel):
     name : str
@@ -105,3 +105,33 @@ class IngestRequest(BaseModel):
 class IngestResponse(BaseModel):
     traces: int
     spans: int
+
+class RecordCreate(BaseModel):
+    id: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    inputs: dict[str, Any]
+    expectations: Optional[dict[str, Any]] = None
+    tags: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+class RecordRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: str
+    dataset_id: int
+    inputs: dict[str, Any]
+    expectations: Optional[dict[str, Any]]
+    tags: list[str]
+    metadata: dict[str, Any] = Field(validation_alias=AliasChoices("metadata", "meta"))
+
+class DataSetCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    records: list[RecordCreate]
+
+class DatasetRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    version: str
+    created_at: datetime
+    records: list[RecordRead]

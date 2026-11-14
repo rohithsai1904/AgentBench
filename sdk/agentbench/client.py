@@ -2,13 +2,11 @@ from __future__ import annotations
 
 import httpx
 
-
 class AgentBenchError(Exception):
     def __init__(self, status: int, detail):
         super().__init__(f"HTTP {status}: {detail}")
         self.status = status
         self.detail = detail
-
 
 class AgentBench:
     
@@ -87,3 +85,9 @@ class AgentBench:
 
     def get_trace(self, trace_id: str) -> dict:
         return self._request("GET", f"/v1/traces/{trace_id}")
+    
+    def create_new_dataset(self,name,version,records):
+        return self._request("POST", "/v1/dataset", json={"name": name,"version":version,"records":records})
+    
+    def get_dataset(self,name,version=None):
+        return self._request("GET",f"/v1/name/{name}",json={"name":name,"version":version})

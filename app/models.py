@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text, func, Float
+from sqlalchemy import Column, Integer, String, UniqueConstraint, ForeignKey, DateTime, Text, func, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from app.db import Base
@@ -64,3 +64,32 @@ class Span(Base):
     attributes = Column(JSONB, default=dict)
 
     trace = relationship("Trace", back_populates="spans", foreign_keys=[trace_id])
+
+class Dataset(Base):
+    __tablename__ = "datasets"
+    __table_args__ = (UniqueConstraint("name", "version", name="uq_dataset_name_version"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False, index=True)
+    version = Column(String(16), nullable=False)     
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    records = relationship(
+        "Record",
+        back_populates="dataset",
+        cascade="all, delete-orphan",
+        order_by="Record.position",
+    )
+
+class Record(Base):
+    __tablename__ = "records"
+    __table_args__ = (UniqueConstraint("dataset_id", "id", name="uq_record_dataset_id"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    dataset_id = Column(Integer, ForeignKey("datasets.id", ondelete="CASCADE"),nullable=False, index=True)
+    inputs = Column(JSONB(none_as_null=True), nullable=False)
+    expectations = Column(JSONB(none_as_null=True), nullable=True)
+    tags = Column(JSONB, nullable=False, default=list)
+    meta = Column("metadata", JSONB, nullable=False, default=dict)
+
+    dataset = relationship("Dataset", back_populates="records")
