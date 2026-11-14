@@ -20,7 +20,7 @@ class Experiment(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
-    name = Column(String,unique=True, index=True, nullable=False)
+    name = Column(String, index=True, nullable=False)
     created_at = Column(DateTime(timezone=True),server_default=func.now())
 
     project = relationship("Project", back_populates="experiments")
@@ -78,14 +78,12 @@ class Dataset(Base):
         "Record",
         back_populates="dataset",
         cascade="all, delete-orphan",
-        order_by="Record.position",
     )
 
 class Record(Base):
     __tablename__ = "records"
-    __table_args__ = (UniqueConstraint("dataset_id", "id", name="uq_record_dataset_id"),)
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(String, primary_key=True, index=True)
     dataset_id = Column(Integer, ForeignKey("datasets.id", ondelete="CASCADE"),nullable=False, index=True)
     inputs = Column(JSONB(none_as_null=True), nullable=False)
     expectations = Column(JSONB(none_as_null=True), nullable=True)

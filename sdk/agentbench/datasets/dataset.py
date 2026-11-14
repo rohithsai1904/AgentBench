@@ -93,7 +93,19 @@ class Dataset:
 
                 file.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
                 file.write("\n")
-
+    
+    def to_payload(self) -> list[dict]:
+        return [
+            {
+                "id": record.id,
+                "inputs": record.inputs,
+                "expectations": record.expectations,
+                "tags": list(record.tags),
+                "metadata": record.metadata
+            }
+            for record in self.records
+        ]
+        
     def add_records(self, records: list[Record]) -> "Dataset":
         """Return a new dataset with validated records."""
 

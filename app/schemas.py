@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Optional
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field,model_validator
 
 class ProjectCreate(BaseModel):
     name : str
@@ -107,7 +107,7 @@ class IngestResponse(BaseModel):
     spans: int
 
 class RecordCreate(BaseModel):
-    id: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    id: str = Field( min_length=1, max_length=200)
     inputs: dict[str, Any]
     expectations: Optional[dict[str, Any]] = None
     tags: list[str] = Field(default_factory=list)
@@ -125,6 +125,7 @@ class RecordRead(BaseModel):
 
 class DataSetCreate(BaseModel):
     name: str = Field(min_length=1, max_length=200)
+    version: str
     records: list[RecordCreate]
 
 class DatasetRead(BaseModel):

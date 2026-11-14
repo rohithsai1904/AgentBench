@@ -1,9 +1,9 @@
 import argparse,sys
 
-from sdk.agentbench.viewer import print_trace
+from .viewer import print_trace
 from .client import AgentBench, AgentBenchError
 
-def main(argv):
+def main(argv=None):
     p = argparse.ArgumentParser(prog="agentbench")
     p.add_argument("--base-url", default="http://localhost:8000")
     p.add_argument("--api-key")
@@ -21,6 +21,7 @@ def main(argv):
         print(f"error: {e}", file=sys.stderr)
         return 1
     print_trace(trace)
+    return 0
 
 if __name__=='__main__':
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))

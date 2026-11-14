@@ -1,7 +1,7 @@
 import json, hashlib
 
 from .dataset import Record, Dataset,_generate_version
-
+from pathlib import Path
 
 class DatasetError(ValueError):
     """Raised when dataset validation fails."""
@@ -32,6 +32,7 @@ def _generate_id(inputs: dict) -> str:
 
 
 def load_jsonlfile(path):
+    path = Path(path)
     records =[]
     allowed_keys = {
         "id",

@@ -44,7 +44,7 @@ class AgentBench:
 
         return resp.json()
 
-    def create_project(self, name: str, description: str | None = None) -> dict:
+    def create_project(self, name: str) -> dict:
         return self._request("POST", "/v1/projects", json={"name": name})
 
     def list_projects(self, name: str | None = None) -> list[dict]:
@@ -86,8 +86,9 @@ class AgentBench:
     def get_trace(self, trace_id: str) -> dict:
         return self._request("GET", f"/v1/traces/{trace_id}")
     
-    def create_new_dataset(self,name,version,records):
+    def create_new_dataset(self,name:str,version:str,records:list[dict]) -> dict:
         return self._request("POST", "/v1/dataset", json={"name": name,"version":version,"records":records})
     
-    def get_dataset(self,name,version=None):
-        return self._request("GET",f"/v1/name/{name}",json={"name":name,"version":version})
+    def get_dataset(self,name:str,version: str|None=None) -> dict:
+        params={"name":name,"version":version or "latest"}
+        return self._request("GET",f"/v1/dataset/name/{name}",params=params)
