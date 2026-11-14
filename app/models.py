@@ -83,8 +83,8 @@ class Dataset(Base):
 class Record(Base):
     __tablename__ = "records"
 
-    id = Column(String, primary_key=True, index=True)
-    dataset_id = Column(Integer, ForeignKey("datasets.id", ondelete="CASCADE"),nullable=False, index=True)
+    id = Column(String, primary_key=True)
+    dataset_id = Column(Integer, ForeignKey("datasets.id", ondelete="CASCADE"),primary_key=True)
     inputs = Column(JSONB(none_as_null=True), nullable=False)
     expectations = Column(JSONB(none_as_null=True), nullable=True)
     tags = Column(JSONB, nullable=False, default=list)

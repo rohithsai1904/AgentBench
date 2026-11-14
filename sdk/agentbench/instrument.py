@@ -11,7 +11,7 @@ _MARK = "_agentbench_wrapped"
 
 
 def _input_of(args: tuple, kwargs: dict) -> Any:
-    # LLM SDKs take keyword arguments (model=..., messages=...). Keep any positional ones too.
+   
     return to_jsonable({"args": list(args), **kwargs} if args else kwargs)
 
 

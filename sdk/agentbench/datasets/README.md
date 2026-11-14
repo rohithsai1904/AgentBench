@@ -39,8 +39,7 @@ Unknown top-level keys are validation errors. This catches misspellings such as 
 5. Prefix the result with `c-`.
 
 Example: `c-a1b2c3d4`
-
-Generated IDs are independent of line position. Identical inputs produce identical IDs.
+Identical inputs produce identical IDs.
 
 Explicit IDs take precedence over generated IDs.
 

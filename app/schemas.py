@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Optional
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field,model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 class ProjectCreate(BaseModel):
     name : str
@@ -128,7 +128,7 @@ class DataSetCreate(BaseModel):
     version: str
     records: list[RecordCreate]
 
-class DatasetRead(BaseModel):
+class DataSetRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int

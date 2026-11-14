@@ -87,8 +87,8 @@ class AgentBench:
         return self._request("GET", f"/v1/traces/{trace_id}")
     
     def create_new_dataset(self,name:str,version:str,records:list[dict]) -> dict:
-        return self._request("POST", "/v1/dataset", json={"name": name,"version":version,"records":records})
+        return self._request("POST", "/v1/datasets", json={"name": name,"version":version,"records":records})
     
     def get_dataset(self,name:str,version: str|None=None) -> dict:
         params={"name":name,"version":version or "latest"}
-        return self._request("GET",f"/v1/dataset/name/{name}",params=params)
+        return self._request("GET",f"/v1/datasets/name/{name}",params=params)
