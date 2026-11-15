@@ -1,7 +1,7 @@
 
 """AgentBench evaluation dataset API."""
 
-from .dataset import Dataset, Record
+from .dataset import Dataset, Record,_generate_version
 from .loader import DatasetError, load_dataset, load_jsonlfile
 
 __all__ = [
