@@ -44,10 +44,10 @@ def get_dataset(dataset_id: int, db: Session = Depends(get_db)):
 @router.get("/name/{name}", response_model=schemas.DataSetRead)
 def get_dataset_by_name(name: str, version: str = "latest", db: Session = Depends(get_db)):
     if version=="latest":
-        db_dataset = db.query(models.Dataset).filter(models.Dataset.name == name).order_by(models.Dataset.created_at.desc()).first()
+        db_dataset = db.query(models.Dataset).filter(models.Dataset.name == name).order_by(models.Dataset.created_at.desc(),models.Dataset.id.desc()).first()
         if not db_dataset:
             raise HTTPException(status_code=404, detail="Dataset not found")
-        db_dataset
+        
     else:
         db_dataset = db.query(models.Dataset).filter(
             models.Dataset.name == name,

@@ -17,6 +17,7 @@ class Project(Base):
 
 class Experiment(Base):
     __tablename__ = "experiments"
+    __table_args__ = (UniqueConstraint("project_id", "name", name="uq_experiment_project_name"),)
 
     id = Column(Integer, primary_key=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)

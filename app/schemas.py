@@ -125,7 +125,7 @@ class RecordRead(BaseModel):
 
 class DataSetCreate(BaseModel):
     name: str = Field(min_length=1, max_length=200)
-    version: str
+    version: str = Field( min_length=1, max_length=16)
     records: list[RecordCreate]
 
 class DataSetRead(BaseModel):

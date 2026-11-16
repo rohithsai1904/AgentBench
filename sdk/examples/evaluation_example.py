@@ -120,7 +120,7 @@ r4 = case("r4", "My keyboard has a dead key, refund please.",         "A-1003", 
 r5 = case("r5", "Headphones mic is faulty, I want a refund.",         "A-1001", refund=True,  contains="refund for you")
 r6 = case("r6", "Refund my missing order A-8888.",                    "A-8888", refund=False, contains="couldn't find")
 
-dataset_d1 = Dataset("support", (r1, r2, r3), _generate_version(r1, r2, r3))
+dataset_d1 = Dataset("support", (r1, r2, r3), _generate_version((r1, r2, r3)))
 dataset_d2 = dataset_d1.add_records((r4, r5, r6))                # new version, d1 is untouched
 
 
@@ -381,7 +381,7 @@ async def test_summarize_counts_skipped():
 def test_add_records_makes_a_new_version_and_leaves_the_old_one_alone():
     assert len(dataset_d1) == 3 and len(dataset_d2) == 6
     assert dataset_d1.version != dataset_d2.version
-    assert dataset_d1.version == _generate_version(*dataset_d1.records)
+    assert dataset_d1.version == _generate_version(dataset_d1.records)
 
 
 # ---------------------------------------------------------------- 6. failures stay contained

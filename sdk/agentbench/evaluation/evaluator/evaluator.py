@@ -4,10 +4,10 @@ from abc import ABC, abstractmethod
 from dataclasses import replace
 from typing import TYPE_CHECKING, Any, Optional
 
-from evaluation import Score
+from ..results import Score
 
 if TYPE_CHECKING:
-    from datasets import Record
+    from agentbench.datasets import Record
 
 
 class Evaluator(ABC):
