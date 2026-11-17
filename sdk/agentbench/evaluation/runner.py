@@ -20,8 +20,6 @@ log = logging.getLogger("agentbench")
 def _describe(exc: BaseException) -> str:
     return f"{type(exc).__name__}: {exc}"
 
-
-# --------------------------------------------------------------------------- step 7
 async def _score_one(
     evaluator: Evaluator, case: "Record", output: Any, timeout: Optional[float]
 ) -> Score:
@@ -80,6 +78,20 @@ async def run_case(
             result.scores.append(await _score_one(evaluator, case, result.output, evaluator_timeout))
         return result
 
+def summarize(run):
+    """{evaluator: {"mean", "pass_rate", "scored", "skipped", "errored"}}"""
+    out = {}
+    for name in run.config["evaluators"]:
+        scores = [s for c in run.cases if (s := c.score_for(name)) is not None]
+        scored = [s for s in scores if s.value is not None]
+        out[name] = {
+            "mean": sum(s.value for s in scored) / len(scored) if scored else None,
+            "pass_rate": sum(1 for s in scored if s.passed) / len(scored) if scored else None,
+            "scored": len(scored),
+            "skipped": sum(1 for s in scores if s.status == "skipped"),
+            "errored": sum(1 for s in scores if s.status == "error"),
+        }
+    return out
 
 async def run_dataset(
     dataset: Iterable["Record"],
